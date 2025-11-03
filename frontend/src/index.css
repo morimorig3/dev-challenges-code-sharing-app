@@ -115,6 +115,11 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground min-h-screen;
+    background-image: linear-gradient(
+      to bottom right,
+      rgba(183, 135, 245, 1),
+      rgba(116, 62, 228, 1)
+    );
   }
 }
