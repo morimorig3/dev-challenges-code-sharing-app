@@ -1,6 +1,6 @@
 # NoteCode - コード共有アプリ
 
-[![DevChallenges](https://img.shields.io/badge/DevChallenges-Code%20Sharing%20App-blue)](https://devchallenges.io/challenge/code-shraing-app-note-code)
+[![DevChallenges](https://img.shields.io/badge/DevChallenges-Code%20Sharing%20App-blue)](https://devchallenges.io/challenge/code-sharing-app-note-code)
 
 コードスニペットを保存し、一意のURLで共有できるフルスタックアプリケーションです。
 
@@ -28,16 +28,40 @@
 ## 技術スタック
 
 ### フロントエンド
-- TBD（技術選定中）
+- **フレームワーク**: React 19 with TypeScript
+- **ビルドツール**: Vite
+- **スタイリング**: Tailwind CSS
+- **UIライブラリ**: shadcn/ui
+- **コードエディタ**: Monaco Editor (@monaco-editor/react)
+- **状態管理**: React Hooks
+- **HTTPクライアント**: Axios
+- **通知**: react-hot-toast
 
 ### バックエンド
-- TBD（技術選定中）
+- **フレームワーク**: NestJS 11 with TypeScript
+- **ランタイム**: Node.js 20+ LTS
+- **ORM**: TypeORM
+- **ID生成**: nanoid
+- **バリデーション**: class-validator + Zod
 
 ### データベース
-- TBD（技術選定中）
+- **RDBMS**: PostgreSQL 14+ (Neon)
+- **ORM**: TypeORM
 
-### デプロイ
-- TBD（技術選定中）
+### デプロイ（完全無料）
+- **フロントエンド**: Cloudflare Pages
+- **バックエンド**: Render
+- **データベース**: Neon (PostgreSQL)
+
+## アーキテクチャ
+
+```
+Cloudflare Pages (フロントエンド)
+    ↓ HTTPS
+Render (NestJS API)
+    ↓ PostgreSQL接続
+Neon (PostgreSQL)
+```
 
 ## セットアップ
 

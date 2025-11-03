@@ -69,7 +69,32 @@ NoteCodeは、ユーザーがコードスニペットを保存し、一意のID�
   - 使用するエディタライブラリが提供するテーマから選択
 - 選択した言語とテーマはスニペットとともに保存され、共有時も反映される
 
-### 3.5 レスポンシブデザイン
+### 3.5 画面遷移とURL設計
+
+本アプリケーションは**単一ページアプリケーション（SPA）**として実装し、クエリパラメータで状態を管理します。
+
+**URL設計**:
+- **新規スニペット作成**: `/`
+  - デフォルトのHTMLコードを表示
+  - Shareボタンは有効状態
+- **既存スニペット表示**: `/?id={snippet_id}`
+  - 例: `/?id=V1StGXR8_Z5jdHi6B-myT`
+  - URLからスニペットIDを取得し、APIから該当スニペットを取得して表示
+  - 他のユーザーが共有URLにアクセスした際の表示
+
+**画面フロー**:
+1. ユーザーがトップページ（`/`）にアクセス → デフォルトHTMLを表示
+2. コードを編集 → Shareボタンが有効化
+3. Shareボタンをクリック → API経由でスニペットを保存 → 一意のIDを取得
+4. `/?id=xxx` 形式のURLを生成 → クリップボードにコピー
+5. 他のユーザーが `/?id=xxx` にアクセス → APIからスニペットを取得して表示
+
+**技術実装**:
+- React Routerは使用しない
+- `URLSearchParams` または `window.location.search` でクエリパラメータを取得
+- `useEffect` でマウント時にクエリパラメータをチェックし、IDがあればAPIから取得
+
+### 3.6 レスポンシブデザイン
 
 - **対応デバイス**:
   - デスクトップ: 1350px 幅を基準
@@ -81,23 +106,249 @@ NoteCodeは、ユーザーがコードスニペットを保存し、一意のID�
 
 ### 4.1 フロントエンド
 
-（あとで記入）
+- **フレームワーク**: React 19
+- **ビルドツール**: Vite
+- **言語**: TypeScript
+- **UIライブラリ**: shadcn/ui
+- **スタイリング**: Tailwind CSS
+- **コードエディタ**: Monaco Editor（@monaco-editor/react）
+- **状態管理**: React Hooks（useState, useEffect）
+- **HTTPクライアント**: Axios または Fetch API
+- **バリデーション**: Zod
+- **クリップボード操作**: Clipboard API
+- **通知**: react-hot-toast または shadcn/ui Toast コンポーネント
+
+**URL設計**:
+- **新規スニペット作成**: `/`
+- **既存スニペット表示**: `/?id={snippet_id}`
+  - 例: `/?id=V1StGXR8_Z5jdHi6B-myT`
+- クエリパラメータの取得: `URLSearchParams` または `window.location.search`
+- React Routerは使用せず、単一ページで完結
+
+**必須機能**:
+- Monaco Editorの統合と設定
+- 言語・テーマ選択UI（ドロップダウン）
+- Shareボタンの状態管理（有効/無効）
+- URLの生成とクリップボードへのコピー
+- クエリパラメータからスニペットIDを取得し、存在する場合はAPIから取得して表示
+- ローディング状態の表示
+- エラーハンドリングとユーザーへのフィードバック
 
 ### 4.2 バックエンド
 
-（あとで記入）
+- **フレームワーク**: NestJS 11
+- **言語**: TypeScript
+- **ランタイム**: Node.js 20+ LTS
+- **ORM**: TypeORM
+- **バリデーション**: Zod + class-validator（NestJSパイプと併用）
+- **環境変数管理**: @nestjs/config
+- **ID生成**: nanoid（21文字のURL-safeなID）
+- **CORS**: @nestjs/platform-express（組み込み）
+- **APIドキュメント**: @nestjs/swagger（オプション）
+
+**アーキテクチャ**:
+- モジュラー構造（Snippets Module等）
+- DTOパターンによる入出力の型定義
+- Repository パターン（TypeORM）
+- Exception Filter によるエラーハンドリング
+
+**必須機能**:
+- スニペット保存エンドポイント（POST /api/snippets）
+- スニペット取得エンドポイント（GET /api/snippets/:id）
+- バリデーションパイプによる入力検証
+- エラーレスポンスの統一
 
 ### 4.3 データベース
 
-（あとで記入）
+- **RDBMS**: PostgreSQL 14+
+- **ORM**: TypeORM
+- **マイグレーション**: TypeORM CLI
+
+**スキーマ設計**:
+
+**Snippets テーブル**:
+```sql
+CREATE TABLE snippets (
+  id VARCHAR(21) PRIMARY KEY,           -- nanoid生成のID
+  code TEXT NOT NULL,                    -- コード本体（最大100KB）
+  language VARCHAR(50) NOT NULL,         -- プログラミング言語（例: html, javascript）
+  theme VARCHAR(50) NOT NULL,            -- エディタテーマ（例: vs-dark）
+  created_at TIMESTAMP DEFAULT NOW(),    -- 作成日時
+  updated_at TIMESTAMP DEFAULT NOW()     -- 更新日時
+);
+
+CREATE INDEX idx_snippets_id ON snippets(id);
+```
+
+**カラム詳細**:
+- `id`: nanoid（21文字）、主キー、一意制約
+- `code`: TEXT型、最大100KB
+- `language`: VARCHAR(50)、Monaco Editorの言語名
+- `theme`: VARCHAR(50)、Monaco Editorのテーマ名
+- `created_at`, `updated_at`: タイムスタンプ
 
 ### 4.4 API仕様
 
-（あとで記入）
+**ベースURL**: `/api`
+
+#### 1. スニペット作成
+
+```
+POST /api/snippets
+```
+
+**リクエストボディ**:
+```json
+{
+  "code": "string",      // 必須、最大100KB
+  "language": "string",  // 必須、例: "html", "javascript"
+  "theme": "string"      // 必須、例: "vs-dark", "light"
+}
+```
+
+**レスポンス（201 Created）**:
+```json
+{
+  "id": "V1StGXR8_Z5jdHi6B-myT",
+  "code": "...",
+  "language": "html",
+  "theme": "vs-dark",
+  "createdAt": "2025-11-02T12:00:00.000Z",
+  "updatedAt": "2025-11-02T12:00:00.000Z"
+}
+```
+
+**エラーレスポンス**:
+- `400 Bad Request`: バリデーションエラー
+- `500 Internal Server Error`: サーバーエラー
+
+#### 2. スニペット取得
+
+```
+GET /api/snippets/:id
+```
+
+**パスパラメータ**:
+- `id`: スニペットID（nanoid、21文字）
+
+**レスポンス（200 OK）**:
+```json
+{
+  "id": "V1StGXR8_Z5jdHi6B-myT",
+  "code": "...",
+  "language": "html",
+  "theme": "vs-dark",
+  "createdAt": "2025-11-02T12:00:00.000Z",
+  "updatedAt": "2025-11-02T12:00:00.000Z"
+}
+```
+
+**エラーレスポンス**:
+- `404 Not Found`: スニペットが見つからない
+  ```json
+  {
+    "statusCode": 404,
+    "message": "スニペットが見つかりません",
+    "error": "Not Found"
+  }
+  ```
+- `500 Internal Server Error`: サーバーエラー
+
+**CORS設定**:
+- フロントエンドのオリジンを許可
+- メソッド: GET, POST
+- ヘッダー: Content-Type, Authorization（将来的な拡張用）
 
 ### 4.5 デプロイメント
 
-（あとで記入）
+**プロジェクト構成**: モノレポまたは分離リポジトリ
+- フロントエンド: `/frontend` または独立リポジトリ
+- バックエンド: `/backend` または独立リポジトリ
+- 共通型定義: `/shared`（オプション）
+
+**採用構成**（完全無料デプロイ）:
+
+```
+Cloudflare Pages (フロントエンド)
+    ↓ HTTPS
+Render (NestJS API)
+    ↓ PostgreSQL接続
+Neon (PostgreSQL)
+```
+
+**各サービスの設定**:
+
+#### **Cloudflare Pages** (フロントエンド)
+- **ビルドコマンド**: `npm run build`
+- **ビルド出力ディレクトリ**: `dist`
+- **Node.js バージョン**: 20+
+- **環境変数**:
+  - `VITE_API_URL`: Renderのバックエンド URL（例: `https://your-app.onrender.com/api`）
+- **機能**:
+  - GitHub連携で自動デプロイ
+  - 無制限の帯域幅
+  - グローバルCDN
+  - カスタムドメイン対応
+
+#### **Render** (バックエンド)
+- **サービスタイプ**: Web Service
+- **ビルドコマンド**: `npm install && npm run build`
+- **起動コマンド**: `npm run start:prod`
+- **Node.js バージョン**: 20+
+- **無料プラン制約**:
+  - 15分間非アクティブでスリープ
+  - 初回リクエスト時に起動（数十秒）
+  - 月750時間まで
+- **環境変数**:
+  - `NODE_ENV=production`
+  - `PORT`: Renderが自動設定
+  - `DATABASE_URL`: Neonの接続文字列
+  - `FRONTEND_URL`: Cloudflare PagesのURL（CORS設定用）
+
+#### **Neon** (PostgreSQL)
+- **プラン**: 無料プラン
+- **リージョン**: 最寄りのリージョン（レイテンシ削減）
+- **機能**:
+  - 0.5 GB ストレージ
+  - 自動スリープ（非アクティブ時）
+  - サーバーレスPostgreSQL
+- **接続情報**: ダッシュボードから接続文字列を取得
+
+**環境変数**:
+
+フロントエンド（`.env`）:
+```bash
+# 開発環境
+VITE_API_URL=http://localhost:3001/api
+
+# 本番環境（Cloudflare Pagesに設定）
+# VITE_API_URL=https://your-app.onrender.com/api
+```
+
+バックエンド（`.env`）:
+```bash
+# 開発環境
+NODE_ENV=development
+PORT=3001
+DATABASE_URL=postgresql://user:password@localhost:5432/notecode
+FRONTEND_URL=http://localhost:5173
+
+# 本番環境（Renderに設定）
+# NODE_ENV=production
+# PORT=<Renderが自動設定>
+# DATABASE_URL=<Neonの接続文字列>
+# FRONTEND_URL=https://your-app.pages.dev
+```
+
+**CI/CD**:
+- GitHub Actions（オプション）
+- デプロイサービスの自動デプロイ機能を利用
+
+**本番環境の考慮事項**:
+- 環境変数の適切な設定
+- データベース接続プールの設定
+- ログ管理
+- エラー監視（オプション: Sentry等）
 
 ## 5. 非機能要件
 
@@ -167,28 +418,67 @@ NoteCodeは、ユーザーがコードスニペットを保存し、一意のID�
 - チャレンジURL: https://devchallenges.io/challenge/code-shraing-app-note-code
 - フルスタック学習パス: https://devchallenges.io/learn/5-fullstack
 
-### 8.2 推奨デプロイサービス（2025年版・無料枠あり）
+### 8.2 採用デプロイサービス（完全無料構成）
 
-#### フルスタック一括デプロイ
-- **Railway** (推奨)
-  - フロントエンド、バックエンド、DBを一箇所で管理
-  - トライアルあり、有料プラン $5/月〜
-  - GitHub連携、永続ストレージ、リアルタイムログ
+本プロジェクトでは、**完全無料**でフルスタックアプリケーションをデプロイするため、以下の構成を採用します。
 
-- **Render**
-  - シンプルで強力、サービス間プライベートネットワーク対応
-  - 無料プランあり
-  - フルスタックアプリに最適
+#### 採用構成
 
-#### 分離デプロイ構成
-- **フロントエンド**:
-  - **Vercel**: Next.js に最適、無料プラン（個人利用）、100GB転送/月
-  - **Netlify**: Git統合が優秀、無料プラン（個人利用）、有料 $19/月〜
+```
+Cloudflare Pages (フロントエンド)
+    ↓
+Render (バックエンド)
+    ↓
+Neon (データベース)
+```
 
-- **バックエンド + データベース**:
-  - **Railway** または **Render**（上記参照）
-  - **Supabase**: PostgreSQL、認証機能付き、無料プランあり
+#### 各サービスの詳細
 
-#### 推奨構成例
-1. **シンプル構成**: Railway（フロントエンド + バックエンド + DB すべて）
-2. **分離構成**: Vercel（フロントエンド）+ Railway（バックエンド + DB）
+**Cloudflare Pages** (フロントエンド)
+- **無料プラン**: 無制限のサイト、帯域幅、リクエスト
+- **特徴**:
+  - 世界最速のCDN（Cloudflareのエッジネットワーク）
+  - ビルド時間: 月500回まで
+  - GitHub連携で自動デプロイ
+  - カスタムドメイン対応
+  - React/Vite に完全対応
+
+**Render** (バックエンド)
+- **無料プラン**: あり
+- **制約**:
+  - 15分間非アクティブでスリープ
+  - 初回リクエスト時に起動（数十秒）
+  - 月750時間まで
+- **特徴**:
+  - NestJS に完全対応
+  - GitHubと連携
+  - 環境変数管理が簡単
+  - 自動HTTPS
+
+**Neon** (データベース)
+- **無料プラン**: あり
+- **制約**:
+  - 0.5 GB ストレージ
+  - 3つのプロジェクトまで
+  - 非アクティブ時に自動スリープ
+- **特徴**:
+  - サーバーレスPostgreSQL
+  - 無制限のデータベース
+  - 自動バックアップ
+  - TypeORM完全対応
+
+#### 代替案（参考）
+
+他の無料デプロイオプション：
+
+**フロントエンド**:
+- **Vercel**: Next.js に最適、100GB転送/月
+- **Netlify**: 100GB帯域幅/月、UIが優秀
+
+**バックエンド**:
+- **Fly.io**: スリープなし、3つのVM無料
+- **Railway**: $5の初期クレジット（使い切ったら有料）
+
+**データベース**:
+- **Supabase**: PostgreSQL + 認証機能、500MB無料
+- **Vercel Postgres**: 256MB（小規模向け）
