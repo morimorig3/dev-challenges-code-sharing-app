@@ -12,8 +12,10 @@ interface SelectProps {
 export const Select: FC<SelectProps> = ({ onChange, items }) => {
   return (
     <NativeSelect onChange={onChange}>
-      {items.map(({ value, label }) => (
-        <NativeSelectOption value={value}>{label}</NativeSelectOption>
+      {items.map(({ value, label }, index) => (
+        <NativeSelectOption key={`${index}${value}`} value={value}>
+          {label}
+        </NativeSelectOption>
       ))}
     </NativeSelect>
   );
