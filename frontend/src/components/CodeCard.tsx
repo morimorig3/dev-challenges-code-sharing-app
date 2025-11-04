@@ -1,11 +1,15 @@
 import { Select } from "./common/select";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardFooter } from "./ui/card";
+import Editor from "@monaco-editor/react";
+import defaultHTML from "@/assets/template.html?raw";
 
 export const CodeCard = () => {
   return (
     <Card>
-      <CardContent>code here</CardContent>
+      <CardContent>
+        <Editor height="50vh" defaultValue={defaultHTML} language="html" />
+      </CardContent>
       <CardFooter>
         <div className="flex justify-between w-full items-baseline">
           <div className="flex gap-x-2">

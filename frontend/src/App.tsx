@@ -8,7 +8,7 @@ function App() {
       className="w-screen min-h-screen bg-size-[100%] bg-no-repeat"
       style={{ backgroundImage: `url(${bgImage})` }}
     >
-      <div className="pt-8 pb-16 flex flex-col items-center">
+      <div className="pt-8 pb-16 px-6 flex flex-col gap-y-6 items-center">
         <Header />
         <div className="max-w-[720px] w-full">
           <CodeCard />
