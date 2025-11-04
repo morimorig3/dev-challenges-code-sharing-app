@@ -1,3 +1,4 @@
+import { Select } from "./common/select";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardFooter } from "./ui/card";
 
@@ -6,10 +7,36 @@ export const CodeCard = () => {
     <Card>
       <CardContent>code here</CardContent>
       <CardFooter>
-        <Button variant="share" size="lg" onClick={() => {}}>
-          <ShareIcon />
-          <span className="font-[Outfit]">Share</span>
-        </Button>
+        <div className="flex justify-between w-full items-baseline">
+          <div className="flex gap-x-2">
+            <Select
+              onChange={() => {}}
+              items={[
+                {
+                  value: "HTML",
+                  label: "HTML",
+                },
+              ]}
+            />
+            <Select
+              onChange={() => {}}
+              items={[
+                {
+                  value: "Light",
+                  label: "Light",
+                },
+                {
+                  value: "Dark",
+                  label: "Dark",
+                },
+              ]}
+            />
+          </div>
+          <Button variant="share" size="lg" onClick={() => {}}>
+            <ShareIcon />
+            <span className="font-[Outfit]">Share</span>
+          </Button>
+        </div>
       </CardFooter>
     </Card>
   );
