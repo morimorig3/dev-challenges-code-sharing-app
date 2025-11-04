@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import bgImage from "@/assets/Hero-Background-notecode.svg";
+import { Header } from "./components/common/headet";
 
 function App() {
   return (
@@ -7,7 +8,10 @@ function App() {
       className="w-screen min-h-screen bg-size-[100%] bg-no-repeat"
       style={{ backgroundImage: `url(${bgImage})` }}
     >
-      <Button>Click me</Button>
+      <div className="pt-8 pb-16">
+        <Header />
+        <Button>Click me</Button>
+      </div>
     </div>
   );
 }
