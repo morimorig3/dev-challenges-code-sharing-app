@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
-import { CreateSnippetDto } from './dto/createSnippetDto';
+import { CreateSnippetDto } from './dto/create-snippet.dto';
 
 @Controller('snippets')
 export class SnippetsController {

@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { SnippetsController } from './snippets/snippets.controller';
-import { SnippetsService } from './snippets/snippets.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { Snippet } from './snippets/entities/snippets.entity';
+import { SnippetsModule } from './snippets/snippets.module';
 
 @Module({
   imports: [
@@ -20,13 +20,13 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         username: configService.get('DB_USERNAME'),
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_DATABASE'),
-        entities: [],
-        synchronize: true, // 本番環境ではfalse
+        entities: [Snippet],
       }),
       inject: [ConfigService],
     }),
+    SnippetsModule,
   ],
-  controllers: [AppController, SnippetsController],
-  providers: [AppService, SnippetsService],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}
