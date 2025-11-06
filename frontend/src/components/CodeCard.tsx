@@ -1,45 +1,105 @@
 import { Select } from "./common/select";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardFooter } from "./ui/card";
-import Editor from "@monaco-editor/react";
+import { Editor, useMonaco } from "@monaco-editor/react";
 import defaultHTML from "@/assets/template.html?raw";
+import axios from "axios";
+import { useEffect, useState } from "react";
+
+const DEFAULT_THEME = "light";
+const DEFAULT_LANGUAGE = "html";
+const BUILT_IN_THEMES = ["vs", "vs-dark", "hc-black", "hc-light"] as const;
 
 export const CodeCard = () => {
+  const [code, setCode] = useState(defaultHTML);
+  const [theme, setTheme] = useState(DEFAULT_THEME);
+  const [language, setLanguage] = useState(DEFAULT_LANGUAGE);
+  const [url, setUrl] = useState("");
+  const monaco = useMonaco();
+  const languages = monaco?.languages.getLanguages() ?? [];
+
+  const handleChangeLanguages: React.ChangeEventHandler<HTMLSelectElement> = (
+    event
+  ) => {
+    setLanguage(event.target.value);
+  };
+
+  const handleChangeTheme: React.ChangeEventHandler<HTMLSelectElement> = (
+    event
+  ) => {
+    setTheme(event.target.value);
+  };
+
+  const handleClickShare: React.MouseEventHandler<
+    HTMLButtonElement
+  > = async () => {
+    const snippet = await createCode({
+      code,
+      theme,
+      language,
+    });
+    if (snippet) {
+      setUrl(`${import.meta.env.VITE_APP_URL}?id=${snippet.id}`);
+    }
+  };
+
+  useEffect(() => {
+    (async () => {
+      const url = new URLSearchParams(window.location.search);
+      const id = url.get("id") ?? "";
+      if (id) {
+        const data = await getSnippet(id);
+        if (data) {
+          setCode(data.code);
+          setTheme(data.theme);
+          setLanguage(data.language);
+        }
+      }
+    })();
+  }, []);
   return (
     <Card>
       <CardContent>
-        <Editor height="50vh" defaultValue={defaultHTML} language="html" />
+        <Editor
+          height="50vh"
+          theme={theme}
+          value={code}
+          language={language}
+          defaultLanguage={language}
+          onChange={(value) => setCode(value ?? "")}
+        />
       </CardContent>
       <CardFooter>
         <div className="flex justify-between w-full items-baseline">
           <div className="flex gap-x-2">
             <Select
-              onChange={() => {}}
-              items={[
-                {
-                  value: "HTML",
-                  label: "HTML",
-                },
-              ]}
+              value={language}
+              onChange={handleChangeLanguages}
+              items={languages.map((language) => ({
+                label: language.aliases ? language.aliases[0] : language.id,
+                value: language.id,
+              }))}
             />
             <Select
-              onChange={() => {}}
-              items={[
-                {
-                  value: "Light",
-                  label: "Light",
-                },
-                {
-                  value: "Dark",
-                  label: "Dark",
-                },
-              ]}
+              value={theme}
+              onChange={handleChangeTheme}
+              items={BUILT_IN_THEMES.map((theme) => ({
+                label: theme,
+                value: theme,
+              }))}
             />
           </div>
-          <Button variant="share" size="lg" onClick={() => {}}>
-            <ShareIcon />
-            <span className="font-[Outfit]">Share</span>
-          </Button>
+          <div className="flex gap-x-2">
+            {url.length !== 0 && (
+              <a target="_blank" href={url}>
+                {url}
+              </a>
+            )}
+            <Button variant="share" size="lg" onClick={handleClickShare}>
+              <ShareIcon />
+              <span className="font-[Outfit]">Share</span>
+            </Button>
+          </div>
         </div>
       </CardFooter>
     </Card>
@@ -61,4 +121,47 @@ const ShareIcon = () => {
       />
     </svg>
   );
+};
+
+// TODO: 生成する？
+interface Snippet {
+  id: string;
+  code: string;
+  language: string;
+  theme: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const getSnippet = async (id: string): Promise<Snippet | null> => {
+  try {
+    const response = await axios.get<Snippet>(
+      `${import.meta.env.VITE_API_URL}/api/snippets/${id}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+};
+
+interface CreateSnippetDto {
+  code: string;
+  language: string;
+  theme: string;
+}
+
+const createCode = async (
+  createSnippetDto: CreateSnippetDto
+): Promise<Snippet | null> => {
+  try {
+    const response = await axios.post<Snippet>(
+      `${import.meta.env.VITE_API_URL}/api/snippets`,
+      createSnippetDto
+    );
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
 };
