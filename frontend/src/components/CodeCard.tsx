@@ -66,7 +66,12 @@ export const CodeCard = () => {
             </div>
           </div>
           <div className="flex gap-x-4 items-center">
-            {isLoading && <LoadingIcon />}
+            {isLoading && (
+              <div className="flex items-center">
+                <p>APIサーバーを起動しています...</p>
+                <LoadingIcon />
+              </div>
+            )}
             {url.length !== 0 && (
               <a
                 className="flex gap-x-2 font-semibold hover:underline text-[#364153]"
@@ -78,7 +83,7 @@ export const CodeCard = () => {
               </a>
             )}
             <Button
-              disabled={!canShare}
+              disabled={!canShare || isLoading}
               variant="share"
               size="lg"
               onClick={handleClickShare}
