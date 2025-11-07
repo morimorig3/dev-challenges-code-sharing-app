@@ -7,16 +7,19 @@ import { ShareIcon } from "./icons/share";
 import { LinkIcon } from "./icons/link";
 import { createSnippet } from "@/lib/createSnippet";
 import { useEditor } from "@/hooks/useEditor";
+import { LoadingIcon } from "./icons/loading";
 
 export const CodeCard = () => {
   const [canShare, setCanShare] = useState(false);
   const [url, setUrl] = useState("");
   const { code, theme, language, languageItems, themeItems, handlers } =
     useEditor();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleClickShare: React.MouseEventHandler<
     HTMLButtonElement
   > = async () => {
+    setIsLoading(true);
     const snippet = await createSnippet({
       code,
       theme,
@@ -26,6 +29,7 @@ export const CodeCard = () => {
       setUrl(`${window.location.href}?id=${snippet.id}`);
       setCanShare(false);
     }
+    setIsLoading(false);
   };
 
   return (
@@ -62,6 +66,7 @@ export const CodeCard = () => {
             </div>
           </div>
           <div className="flex gap-x-4 items-center">
+            {isLoading && <LoadingIcon />}
             {url.length !== 0 && (
               <a
                 className="flex gap-x-2 font-semibold hover:underline text-[#364153]"
