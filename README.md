@@ -52,7 +52,7 @@
 
 ### データベース
 
-- **RDBMS**: PostgreSQL 16 (開発: Docker / 本番: Neon)
+- **RDBMS**: PostgreSQL 16 (開発: Docker / 本番: Render)
 - **ORM**: TypeORM
 - **マイグレーション**: TypeORM CLI
 
@@ -60,7 +60,7 @@
 
 - **フロントエンド**: Cloudflare Pages
 - **バックエンド**: Render (Free Tier)
-- **データベース**: Neon (Free Tier)
+- **データベース**: Render (Free Tier)
 
 ## アーキテクチャ
 
@@ -69,21 +69,12 @@ Cloudflare Pages (フロントエンド)
     ↓ HTTPS
 Render (NestJS API)
     ↓ PostgreSQL接続
-Neon (PostgreSQL)
+Render (PostgreSQL)
 ```
-
-## セットアップ
-
-TBD
-
-## 開発
-
-TBD
 
 ## デモ
 
 - **フロントエンド**: https://dev-challenges-code-sharing-app.pages.dev/
-- **バックエンド**: TBD (Render にデプロイ予定)
 
 ## ライセンス
 
