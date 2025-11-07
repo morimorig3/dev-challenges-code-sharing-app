@@ -1,8 +1,13 @@
 import bgImage from "@/assets/Hero-Background-notecode.svg";
 import { Header } from "./components/common/headet";
 import { CodeCard } from "./components/CodeCard";
+import { useEffect } from "react";
 
 function App() {
+  useEffect(() => {
+    // Renderを叩き起こす
+    fetch(`${import.meta.env.VITE_API_URL}/api/`);
+  }, []);
   return (
     <div
       className="w-screen min-h-screen bg-size-[100%] bg-no-repeat"
