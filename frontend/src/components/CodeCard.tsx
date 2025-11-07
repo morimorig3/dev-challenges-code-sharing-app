@@ -1,49 +1,23 @@
 import { Select } from "./common/select";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardFooter } from "./ui/card";
-import { Editor, useMonaco } from "@monaco-editor/react";
-import defaultHTML from "@/assets/template.html?raw";
-import axios from "axios";
-import { useEffect, useState, type ComponentProps } from "react";
+import { Editor } from "@monaco-editor/react";
+import { useState } from "react";
 import { ShareIcon } from "./icons/share";
 import { LinkIcon } from "./icons/link";
-
-const DEFAULT_THEME = "light";
-const DEFAULT_LANGUAGE = "html";
-const BUILT_IN_THEMES = ["vs", "vs-dark", "hc-black", "hc-light"] as const;
+import { createSnippet } from "@/lib/createSnippet";
+import { useEditor } from "@/hooks/useEditor";
 
 export const CodeCard = () => {
-  const [code, setCode] = useState(defaultHTML);
   const [canShare, setCanShare] = useState(false);
-  const [theme, setTheme] = useState(DEFAULT_THEME);
-  const [language, setLanguage] = useState(DEFAULT_LANGUAGE);
   const [url, setUrl] = useState("");
-  const monaco = useMonaco();
-  const languages = monaco?.languages.getLanguages() ?? [];
-
-  const handleChangeLanguages: React.ChangeEventHandler<HTMLSelectElement> = (
-    event
-  ) => {
-    setLanguage(event.target.value);
-  };
-
-  const handleChangeTheme: React.ChangeEventHandler<HTMLSelectElement> = (
-    event
-  ) => {
-    setTheme(event.target.value);
-  };
-
-  const handleChangeCode: ComponentProps<typeof Editor>["onChange"] = (
-    value
-  ) => {
-    setCode(value ?? "");
-    setCanShare(true);
-  };
+  const { code, theme, language, languageItems, themeItems, handlers } =
+    useEditor();
 
   const handleClickShare: React.MouseEventHandler<
     HTMLButtonElement
   > = async () => {
-    const snippet = await createCode({
+    const snippet = await createSnippet({
       code,
       theme,
       language,
@@ -54,21 +28,6 @@ export const CodeCard = () => {
     }
   };
 
-  useEffect(() => {
-    (async () => {
-      const url = new URLSearchParams(window.location.search);
-      const id = url.get("id") ?? "";
-      if (id) {
-        const data = await getSnippet(id);
-        if (data) {
-          setCode(data.code);
-          setTheme(data.theme);
-          setLanguage(data.language);
-        }
-      }
-    })();
-  }, []);
-
   return (
     <Card>
       <CardContent>
@@ -78,7 +37,10 @@ export const CodeCard = () => {
           value={code}
           language={language}
           defaultLanguage={language}
-          onChange={handleChangeCode}
+          onChange={(value) => {
+            handlers.onChangeCode(value);
+            setCanShare(true);
+          }}
         />
       </CardContent>
       <CardFooter>
@@ -87,21 +49,15 @@ export const CodeCard = () => {
             <div className="w-20">
               <Select
                 value={language}
-                onChange={handleChangeLanguages}
-                items={languages.map((language) => ({
-                  label: language.aliases ? language.aliases[0] : language.id,
-                  value: language.id,
-                }))}
+                onChange={handlers.onChangeLanguage}
+                items={languageItems}
               />
             </div>
             <div className="w-20">
               <Select
                 value={theme}
-                onChange={handleChangeTheme}
-                items={BUILT_IN_THEMES.map((theme) => ({
-                  label: theme,
-                  value: theme,
-                }))}
+                onChange={handlers.onChangeTheme}
+                items={themeItems}
               />
             </div>
           </div>
@@ -130,47 +86,4 @@ export const CodeCard = () => {
       </CardFooter>
     </Card>
   );
-};
-
-// TODO: 生成する？
-interface Snippet {
-  id: string;
-  code: string;
-  language: string;
-  theme: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-const getSnippet = async (id: string): Promise<Snippet | null> => {
-  try {
-    const response = await axios.get<Snippet>(
-      `${import.meta.env.VITE_API_URL}/api/snippets/${id}`
-    );
-    return response.data;
-  } catch (error) {
-    console.error(error);
-    return null;
-  }
-};
-
-interface CreateSnippetDto {
-  code: string;
-  language: string;
-  theme: string;
-}
-
-const createCode = async (
-  createSnippetDto: CreateSnippetDto
-): Promise<Snippet | null> => {
-  try {
-    const response = await axios.post<Snippet>(
-      `${import.meta.env.VITE_API_URL}/api/snippets`,
-      createSnippetDto
-    );
-    return response.data;
-  } catch (error) {
-    console.error(error);
-    return null;
-  }
 };
